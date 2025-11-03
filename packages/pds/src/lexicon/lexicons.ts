@@ -410,6 +410,7 @@ export const schemaDict = {
             'lex:app.bsky.actor.defs#labelersPref',
             'lex:app.bsky.actor.defs#postInteractionSettingsPref',
             'lex:app.bsky.actor.defs#verificationPrefs',
+            'lex:app.bsky.actor.defs#privateProfilePref',
           ],
         },
       },
@@ -756,6 +757,20 @@ export const schemaDict = {
           },
         },
       },
+      privateProfilePref: {
+        type: 'object',
+        description:
+          "Preferences for private profile settings, controlling who can follow and view the account's content. Existing followers are retained when switching to private; only new follow attempts require approval.",
+        required: ['isPrivate'],
+        properties: {
+          isPrivate: {
+            type: 'boolean',
+            description:
+              'Whether the profile is private. If true, new follow requests must be approved before followers can view content. Existing followers are automatically retained.',
+            default: false,
+          },
+        },
+      },
       postInteractionSettingsPref: {
         type: 'object',
         description:
@@ -846,6 +861,53 @@ export const schemaDict = {
             },
           },
         },
+      },
+    },
+  },
+  AppBskyActorGetPrivacySettings: {
+    lexicon: 1,
+    id: 'app.bsky.actor.getPrivacySettings',
+    defs: {
+      main: {
+        type: 'query',
+        description:
+          'Get privacy settings for an actor. If no actor specified, returns settings for the authenticated user. Non-private users can have their settings viewed by anyone. Private users can only have their settings viewed by themselves. Requires auth for viewing private profiles.',
+        parameters: {
+          type: 'params',
+          properties: {
+            actor: {
+              type: 'string',
+              format: 'at-identifier',
+              description:
+                'The actor whose privacy settings to retrieve. If not specified, returns settings for the authenticated user.',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['isPrivate'],
+            properties: {
+              isPrivate: {
+                type: 'boolean',
+                description:
+                  'Whether the profile is private and requires follow request approval',
+              },
+            },
+          },
+        },
+        errors: [
+          {
+            name: 'NotFound',
+            description: 'The specified actor could not be found',
+          },
+          {
+            name: 'NotAuthorized',
+            description:
+              'The authenticated user is not authorized to view these settings',
+          },
+        ],
       },
     },
   },
@@ -1155,6 +1217,50 @@ export const schemaDict = {
             },
           },
         },
+      },
+    },
+  },
+  AppBskyActorSetPrivacySettings: {
+    lexicon: 1,
+    id: 'app.bsky.actor.setPrivacySettings',
+    defs: {
+      main: {
+        type: 'procedure',
+        description:
+          "Set privacy settings for the authenticated user's profile. Requires auth.",
+        input: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['isPrivate'],
+            properties: {
+              isPrivate: {
+                type: 'boolean',
+                description:
+                  'Whether the profile should be private and require follow request approval',
+              },
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['isPrivate'],
+            properties: {
+              isPrivate: {
+                type: 'boolean',
+                description: 'Whether the profile is private',
+              },
+            },
+          },
+        },
+        errors: [
+          {
+            name: 'InvalidRequest',
+            description: 'The request parameters are invalid',
+          },
+        ],
       },
     },
   },
@@ -3775,6 +3881,66 @@ export const schemaDict = {
       },
     },
   },
+  AppBskyGraphCreateFollowRequest: {
+    lexicon: 1,
+    id: 'app.bsky.graph.createFollowRequest',
+    defs: {
+      main: {
+        type: 'procedure',
+        description:
+          'Create a follow request to a private profile. If the profile is not private, this will fail and the client should create a regular follow instead. Duplicate requests to the same subject will be rejected. Requires auth.',
+        input: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['subject'],
+            properties: {
+              subject: {
+                type: 'string',
+                format: 'did',
+                description: 'DID of the private profile to request to follow',
+              },
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['uri', 'cid'],
+            properties: {
+              uri: {
+                type: 'string',
+                format: 'at-uri',
+                description: 'AT-URI of the created follow request record',
+              },
+              cid: {
+                type: 'string',
+                format: 'cid',
+                description: 'CID of the created follow request record',
+              },
+            },
+          },
+        },
+        errors: [
+          {
+            name: 'ProfileNotPrivate',
+            description:
+              'The target profile is not private; use regular follow instead',
+          },
+          {
+            name: 'DuplicateRequest',
+            description:
+              'A pending follow request to this subject already exists',
+          },
+          {
+            name: 'SubjectNotFound',
+            description: 'The specified subject DID could not be found',
+          },
+        ],
+      },
+    },
+  },
   AppBskyGraphDefs: {
     lexicon: 1,
     id: 'app.bsky.graph.defs',
@@ -4079,6 +4245,50 @@ export const schemaDict = {
           },
         },
       },
+      followRequestView: {
+        type: 'object',
+        description:
+          'View of a follow request with requester profile information',
+        required: ['uri', 'requester', 'subject', 'status', 'createdAt'],
+        properties: {
+          uri: {
+            type: 'string',
+            format: 'at-uri',
+            description: 'AT-URI of the follow request record',
+          },
+          cid: {
+            type: 'string',
+            format: 'cid',
+            description: 'CID of the follow request record',
+          },
+          requester: {
+            type: 'ref',
+            ref: 'lex:app.bsky.actor.defs#profileView',
+            description: 'Profile of the account making the follow request',
+          },
+          subject: {
+            type: 'string',
+            format: 'did',
+            description: 'DID of the private profile being requested to follow',
+          },
+          status: {
+            type: 'string',
+            enum: ['pending', 'approved', 'denied'],
+            description: 'Current status of the follow request',
+          },
+          createdAt: {
+            type: 'string',
+            format: 'datetime',
+            description: 'Timestamp when the follow request was created',
+          },
+          respondedAt: {
+            type: 'string',
+            format: 'datetime',
+            description:
+              'Timestamp when the follow request was approved or denied',
+          },
+        },
+      },
     },
   },
   AppBskyGraphFollow: {
@@ -4105,6 +4315,46 @@ export const schemaDict = {
             via: {
               type: 'ref',
               ref: 'lex:com.atproto.repo.strongRef',
+            },
+          },
+        },
+      },
+    },
+  },
+  AppBskyGraphFollowRequest: {
+    lexicon: 1,
+    id: 'app.bsky.graph.followRequest',
+    defs: {
+      main: {
+        type: 'record',
+        description:
+          'Record representing a follow request to a private profile. Duplicate follow requests will be ignored by the AppView.',
+        key: 'tid',
+        record: {
+          type: 'object',
+          required: ['subject', 'status', 'createdAt'],
+          properties: {
+            subject: {
+              type: 'string',
+              format: 'did',
+              description: 'DID of the account being requested to follow',
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'approved', 'denied'],
+              description: 'Current status of the follow request',
+              default: 'pending',
+            },
+            createdAt: {
+              type: 'string',
+              format: 'datetime',
+              description: 'Timestamp when the follow request was created',
+            },
+            respondedAt: {
+              type: 'string',
+              format: 'datetime',
+              description:
+                'Timestamp when the follow request was approved or denied',
             },
           },
         },
@@ -4987,6 +5237,68 @@ export const schemaDict = {
       },
     },
   },
+  AppBskyGraphListFollowRequests: {
+    lexicon: 1,
+    id: 'app.bsky.graph.listFollowRequests',
+    defs: {
+      main: {
+        type: 'query',
+        description:
+          'List follow requests for the authenticated user. Can list incoming requests (requests to follow you) or outgoing requests (your requests to follow others). Requires auth.',
+        parameters: {
+          type: 'params',
+          properties: {
+            direction: {
+              type: 'string',
+              enum: ['incoming', 'outgoing'],
+              default: 'incoming',
+              description:
+                "Direction of follow requests: 'incoming' for requests to follow you, 'outgoing' for your requests to follow others",
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'approved', 'denied', 'all'],
+              default: 'pending',
+              description:
+                "Filter by request status. 'all' returns requests of any status.",
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 50,
+              description: 'Maximum number of results to return',
+            },
+            cursor: {
+              type: 'string',
+              description: 'Pagination cursor from previous response',
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['requests'],
+            properties: {
+              cursor: {
+                type: 'string',
+                description: 'Pagination cursor for next page of results',
+              },
+              requests: {
+                type: 'array',
+                description: 'List of follow request views',
+                items: {
+                  type: 'ref',
+                  ref: 'lex:app.bsky.graph.defs#followRequestView',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   AppBskyGraphListblock: {
     lexicon: 1,
     id: 'app.bsky.graph.listblock',
@@ -5116,6 +5428,73 @@ export const schemaDict = {
             },
           },
         },
+      },
+    },
+  },
+  AppBskyGraphRespondToFollowRequest: {
+    lexicon: 1,
+    id: 'app.bsky.graph.respondToFollowRequest',
+    defs: {
+      main: {
+        type: 'procedure',
+        description:
+          'Approve or deny a follow request to a private profile. When approved, automatically creates the follow record. Requires auth.',
+        input: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['requestUri', 'response'],
+            properties: {
+              requestUri: {
+                type: 'string',
+                format: 'at-uri',
+                description:
+                  'AT-URI of the follow request record to respond to',
+              },
+              response: {
+                type: 'string',
+                enum: ['approve', 'deny'],
+                description: 'Whether to approve or deny the follow request',
+              },
+            },
+          },
+        },
+        output: {
+          encoding: 'application/json',
+          schema: {
+            type: 'object',
+            required: ['request'],
+            properties: {
+              request: {
+                type: 'ref',
+                ref: 'lex:com.atproto.repo.strongRef',
+                description: 'Reference to the updated follow request record',
+              },
+              followRecord: {
+                type: 'ref',
+                ref: 'lex:com.atproto.repo.strongRef',
+                description:
+                  'Reference to the created follow record (only present when approved)',
+              },
+            },
+          },
+        },
+        errors: [
+          {
+            name: 'RequestNotFound',
+            description: 'The specified follow request could not be found',
+          },
+          {
+            name: 'InvalidResponse',
+            description:
+              "The response value is not valid (must be 'approve' or 'deny')",
+          },
+          {
+            name: 'NotAuthorized',
+            description:
+              'The authenticated user is not authorized to respond to this request',
+          },
+        ],
       },
     },
   },
@@ -19073,6 +19452,7 @@ export function validate(
 export const ids = {
   AppBskyActorDefs: 'app.bsky.actor.defs',
   AppBskyActorGetPreferences: 'app.bsky.actor.getPreferences',
+  AppBskyActorGetPrivacySettings: 'app.bsky.actor.getPrivacySettings',
   AppBskyActorGetProfile: 'app.bsky.actor.getProfile',
   AppBskyActorGetProfiles: 'app.bsky.actor.getProfiles',
   AppBskyActorGetSuggestions: 'app.bsky.actor.getSuggestions',
@@ -19080,6 +19460,7 @@ export const ids = {
   AppBskyActorPutPreferences: 'app.bsky.actor.putPreferences',
   AppBskyActorSearchActors: 'app.bsky.actor.searchActors',
   AppBskyActorSearchActorsTypeahead: 'app.bsky.actor.searchActorsTypeahead',
+  AppBskyActorSetPrivacySettings: 'app.bsky.actor.setPrivacySettings',
   AppBskyActorStatus: 'app.bsky.actor.status',
   AppBskyBookmarkCreateBookmark: 'app.bsky.bookmark.createBookmark',
   AppBskyBookmarkDefs: 'app.bsky.bookmark.defs',
@@ -19117,8 +19498,10 @@ export const ids = {
   AppBskyFeedSendInteractions: 'app.bsky.feed.sendInteractions',
   AppBskyFeedThreadgate: 'app.bsky.feed.threadgate',
   AppBskyGraphBlock: 'app.bsky.graph.block',
+  AppBskyGraphCreateFollowRequest: 'app.bsky.graph.createFollowRequest',
   AppBskyGraphDefs: 'app.bsky.graph.defs',
   AppBskyGraphFollow: 'app.bsky.graph.follow',
+  AppBskyGraphFollowRequest: 'app.bsky.graph.followRequest',
   AppBskyGraphGetActorStarterPacks: 'app.bsky.graph.getActorStarterPacks',
   AppBskyGraphGetBlocks: 'app.bsky.graph.getBlocks',
   AppBskyGraphGetFollowers: 'app.bsky.graph.getFollowers',
@@ -19138,11 +19521,13 @@ export const ids = {
   AppBskyGraphGetSuggestedFollowsByActor:
     'app.bsky.graph.getSuggestedFollowsByActor',
   AppBskyGraphList: 'app.bsky.graph.list',
+  AppBskyGraphListFollowRequests: 'app.bsky.graph.listFollowRequests',
   AppBskyGraphListblock: 'app.bsky.graph.listblock',
   AppBskyGraphListitem: 'app.bsky.graph.listitem',
   AppBskyGraphMuteActor: 'app.bsky.graph.muteActor',
   AppBskyGraphMuteActorList: 'app.bsky.graph.muteActorList',
   AppBskyGraphMuteThread: 'app.bsky.graph.muteThread',
+  AppBskyGraphRespondToFollowRequest: 'app.bsky.graph.respondToFollowRequest',
   AppBskyGraphSearchStarterPacks: 'app.bsky.graph.searchStarterPacks',
   AppBskyGraphStarterpack: 'app.bsky.graph.starterpack',
   AppBskyGraphUnmuteActor: 'app.bsky.graph.unmuteActor',

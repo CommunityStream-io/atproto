@@ -11,12 +11,14 @@ import {
 } from '@atproto/xrpc-server'
 import { schemas } from './lexicons.js'
 import * as AppBskyActorGetPreferences from './types/app/bsky/actor/getPreferences.js'
+import * as AppBskyActorGetPrivacySettings from './types/app/bsky/actor/getPrivacySettings.js'
 import * as AppBskyActorGetProfile from './types/app/bsky/actor/getProfile.js'
 import * as AppBskyActorGetProfiles from './types/app/bsky/actor/getProfiles.js'
 import * as AppBskyActorGetSuggestions from './types/app/bsky/actor/getSuggestions.js'
 import * as AppBskyActorPutPreferences from './types/app/bsky/actor/putPreferences.js'
 import * as AppBskyActorSearchActors from './types/app/bsky/actor/searchActors.js'
 import * as AppBskyActorSearchActorsTypeahead from './types/app/bsky/actor/searchActorsTypeahead.js'
+import * as AppBskyActorSetPrivacySettings from './types/app/bsky/actor/setPrivacySettings.js'
 import * as AppBskyBookmarkCreateBookmark from './types/app/bsky/bookmark/createBookmark.js'
 import * as AppBskyBookmarkDeleteBookmark from './types/app/bsky/bookmark/deleteBookmark.js'
 import * as AppBskyBookmarkGetBookmarks from './types/app/bsky/bookmark/getBookmarks.js'
@@ -38,6 +40,7 @@ import * as AppBskyFeedGetSuggestedFeeds from './types/app/bsky/feed/getSuggeste
 import * as AppBskyFeedGetTimeline from './types/app/bsky/feed/getTimeline.js'
 import * as AppBskyFeedSearchPosts from './types/app/bsky/feed/searchPosts.js'
 import * as AppBskyFeedSendInteractions from './types/app/bsky/feed/sendInteractions.js'
+import * as AppBskyGraphCreateFollowRequest from './types/app/bsky/graph/createFollowRequest.js'
 import * as AppBskyGraphGetActorStarterPacks from './types/app/bsky/graph/getActorStarterPacks.js'
 import * as AppBskyGraphGetBlocks from './types/app/bsky/graph/getBlocks.js'
 import * as AppBskyGraphGetFollowers from './types/app/bsky/graph/getFollowers.js'
@@ -54,9 +57,11 @@ import * as AppBskyGraphGetStarterPack from './types/app/bsky/graph/getStarterPa
 import * as AppBskyGraphGetStarterPacks from './types/app/bsky/graph/getStarterPacks.js'
 import * as AppBskyGraphGetStarterPacksWithMembership from './types/app/bsky/graph/getStarterPacksWithMembership.js'
 import * as AppBskyGraphGetSuggestedFollowsByActor from './types/app/bsky/graph/getSuggestedFollowsByActor.js'
+import * as AppBskyGraphListFollowRequests from './types/app/bsky/graph/listFollowRequests.js'
 import * as AppBskyGraphMuteActor from './types/app/bsky/graph/muteActor.js'
 import * as AppBskyGraphMuteActorList from './types/app/bsky/graph/muteActorList.js'
 import * as AppBskyGraphMuteThread from './types/app/bsky/graph/muteThread.js'
+import * as AppBskyGraphRespondToFollowRequest from './types/app/bsky/graph/respondToFollowRequest.js'
 import * as AppBskyGraphSearchStarterPacks from './types/app/bsky/graph/searchStarterPacks.js'
 import * as AppBskyGraphUnmuteActor from './types/app/bsky/graph/unmuteActor.js'
 import * as AppBskyGraphUnmuteActorList from './types/app/bsky/graph/unmuteActorList.js'
@@ -435,6 +440,18 @@ export class AppBskyActorNS {
     return this._server.xrpc.method(nsid, cfg)
   }
 
+  getPrivacySettings<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      AppBskyActorGetPrivacySettings.QueryParams,
+      AppBskyActorGetPrivacySettings.HandlerInput,
+      AppBskyActorGetPrivacySettings.HandlerOutput
+    >,
+  ) {
+    const nsid = 'app.bsky.actor.getPrivacySettings' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
   getProfile<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
@@ -504,6 +521,18 @@ export class AppBskyActorNS {
     >,
   ) {
     const nsid = 'app.bsky.actor.searchActorsTypeahead' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  setPrivacySettings<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      AppBskyActorSetPrivacySettings.QueryParams,
+      AppBskyActorSetPrivacySettings.HandlerInput,
+      AppBskyActorSetPrivacySettings.HandlerOutput
+    >,
+  ) {
+    const nsid = 'app.bsky.actor.setPrivacySettings' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 }
@@ -791,6 +820,18 @@ export class AppBskyGraphNS {
     this._server = server
   }
 
+  createFollowRequest<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      AppBskyGraphCreateFollowRequest.QueryParams,
+      AppBskyGraphCreateFollowRequest.HandlerInput,
+      AppBskyGraphCreateFollowRequest.HandlerOutput
+    >,
+  ) {
+    const nsid = 'app.bsky.graph.createFollowRequest' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
   getActorStarterPacks<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
@@ -983,6 +1024,18 @@ export class AppBskyGraphNS {
     return this._server.xrpc.method(nsid, cfg)
   }
 
+  listFollowRequests<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      AppBskyGraphListFollowRequests.QueryParams,
+      AppBskyGraphListFollowRequests.HandlerInput,
+      AppBskyGraphListFollowRequests.HandlerOutput
+    >,
+  ) {
+    const nsid = 'app.bsky.graph.listFollowRequests' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
   muteActor<A extends Auth = void>(
     cfg: MethodConfigOrHandler<
       A,
@@ -1016,6 +1069,18 @@ export class AppBskyGraphNS {
     >,
   ) {
     const nsid = 'app.bsky.graph.muteThread' // @ts-ignore
+    return this._server.xrpc.method(nsid, cfg)
+  }
+
+  respondToFollowRequest<A extends Auth = void>(
+    cfg: MethodConfigOrHandler<
+      A,
+      AppBskyGraphRespondToFollowRequest.QueryParams,
+      AppBskyGraphRespondToFollowRequest.HandlerInput,
+      AppBskyGraphRespondToFollowRequest.HandlerOutput
+    >,
+  ) {
+    const nsid = 'app.bsky.graph.respondToFollowRequest' // @ts-ignore
     return this._server.xrpc.method(nsid, cfg)
   }
 

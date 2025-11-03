@@ -11,6 +11,7 @@ import { CID } from 'multiformats/cid'
 import { type OmitKey, type Un$Typed } from './util.js'
 import * as AppBskyActorDefs from './types/app/bsky/actor/defs.js'
 import * as AppBskyActorGetPreferences from './types/app/bsky/actor/getPreferences.js'
+import * as AppBskyActorGetPrivacySettings from './types/app/bsky/actor/getPrivacySettings.js'
 import * as AppBskyActorGetProfile from './types/app/bsky/actor/getProfile.js'
 import * as AppBskyActorGetProfiles from './types/app/bsky/actor/getProfiles.js'
 import * as AppBskyActorGetSuggestions from './types/app/bsky/actor/getSuggestions.js'
@@ -18,6 +19,7 @@ import * as AppBskyActorProfile from './types/app/bsky/actor/profile.js'
 import * as AppBskyActorPutPreferences from './types/app/bsky/actor/putPreferences.js'
 import * as AppBskyActorSearchActors from './types/app/bsky/actor/searchActors.js'
 import * as AppBskyActorSearchActorsTypeahead from './types/app/bsky/actor/searchActorsTypeahead.js'
+import * as AppBskyActorSetPrivacySettings from './types/app/bsky/actor/setPrivacySettings.js'
 import * as AppBskyActorStatus from './types/app/bsky/actor/status.js'
 import * as AppBskyBookmarkCreateBookmark from './types/app/bsky/bookmark/createBookmark.js'
 import * as AppBskyBookmarkDefs from './types/app/bsky/bookmark/defs.js'
@@ -55,8 +57,10 @@ import * as AppBskyFeedSearchPosts from './types/app/bsky/feed/searchPosts.js'
 import * as AppBskyFeedSendInteractions from './types/app/bsky/feed/sendInteractions.js'
 import * as AppBskyFeedThreadgate from './types/app/bsky/feed/threadgate.js'
 import * as AppBskyGraphBlock from './types/app/bsky/graph/block.js'
+import * as AppBskyGraphCreateFollowRequest from './types/app/bsky/graph/createFollowRequest.js'
 import * as AppBskyGraphDefs from './types/app/bsky/graph/defs.js'
 import * as AppBskyGraphFollow from './types/app/bsky/graph/follow.js'
+import * as AppBskyGraphFollowRequest from './types/app/bsky/graph/followRequest.js'
 import * as AppBskyGraphGetActorStarterPacks from './types/app/bsky/graph/getActorStarterPacks.js'
 import * as AppBskyGraphGetBlocks from './types/app/bsky/graph/getBlocks.js'
 import * as AppBskyGraphGetFollowers from './types/app/bsky/graph/getFollowers.js'
@@ -74,11 +78,13 @@ import * as AppBskyGraphGetStarterPacks from './types/app/bsky/graph/getStarterP
 import * as AppBskyGraphGetStarterPacksWithMembership from './types/app/bsky/graph/getStarterPacksWithMembership.js'
 import * as AppBskyGraphGetSuggestedFollowsByActor from './types/app/bsky/graph/getSuggestedFollowsByActor.js'
 import * as AppBskyGraphList from './types/app/bsky/graph/list.js'
+import * as AppBskyGraphListFollowRequests from './types/app/bsky/graph/listFollowRequests.js'
 import * as AppBskyGraphListblock from './types/app/bsky/graph/listblock.js'
 import * as AppBskyGraphListitem from './types/app/bsky/graph/listitem.js'
 import * as AppBskyGraphMuteActor from './types/app/bsky/graph/muteActor.js'
 import * as AppBskyGraphMuteActorList from './types/app/bsky/graph/muteActorList.js'
 import * as AppBskyGraphMuteThread from './types/app/bsky/graph/muteThread.js'
+import * as AppBskyGraphRespondToFollowRequest from './types/app/bsky/graph/respondToFollowRequest.js'
 import * as AppBskyGraphSearchStarterPacks from './types/app/bsky/graph/searchStarterPacks.js'
 import * as AppBskyGraphStarterpack from './types/app/bsky/graph/starterpack.js'
 import * as AppBskyGraphUnmuteActor from './types/app/bsky/graph/unmuteActor.js'
@@ -304,6 +310,7 @@ import * as ToolsOzoneVerificationRevokeVerifications from './types/tools/ozone/
 
 export * as AppBskyActorDefs from './types/app/bsky/actor/defs.js'
 export * as AppBskyActorGetPreferences from './types/app/bsky/actor/getPreferences.js'
+export * as AppBskyActorGetPrivacySettings from './types/app/bsky/actor/getPrivacySettings.js'
 export * as AppBskyActorGetProfile from './types/app/bsky/actor/getProfile.js'
 export * as AppBskyActorGetProfiles from './types/app/bsky/actor/getProfiles.js'
 export * as AppBskyActorGetSuggestions from './types/app/bsky/actor/getSuggestions.js'
@@ -311,6 +318,7 @@ export * as AppBskyActorProfile from './types/app/bsky/actor/profile.js'
 export * as AppBskyActorPutPreferences from './types/app/bsky/actor/putPreferences.js'
 export * as AppBskyActorSearchActors from './types/app/bsky/actor/searchActors.js'
 export * as AppBskyActorSearchActorsTypeahead from './types/app/bsky/actor/searchActorsTypeahead.js'
+export * as AppBskyActorSetPrivacySettings from './types/app/bsky/actor/setPrivacySettings.js'
 export * as AppBskyActorStatus from './types/app/bsky/actor/status.js'
 export * as AppBskyBookmarkCreateBookmark from './types/app/bsky/bookmark/createBookmark.js'
 export * as AppBskyBookmarkDefs from './types/app/bsky/bookmark/defs.js'
@@ -348,8 +356,10 @@ export * as AppBskyFeedSearchPosts from './types/app/bsky/feed/searchPosts.js'
 export * as AppBskyFeedSendInteractions from './types/app/bsky/feed/sendInteractions.js'
 export * as AppBskyFeedThreadgate from './types/app/bsky/feed/threadgate.js'
 export * as AppBskyGraphBlock from './types/app/bsky/graph/block.js'
+export * as AppBskyGraphCreateFollowRequest from './types/app/bsky/graph/createFollowRequest.js'
 export * as AppBskyGraphDefs from './types/app/bsky/graph/defs.js'
 export * as AppBskyGraphFollow from './types/app/bsky/graph/follow.js'
+export * as AppBskyGraphFollowRequest from './types/app/bsky/graph/followRequest.js'
 export * as AppBskyGraphGetActorStarterPacks from './types/app/bsky/graph/getActorStarterPacks.js'
 export * as AppBskyGraphGetBlocks from './types/app/bsky/graph/getBlocks.js'
 export * as AppBskyGraphGetFollowers from './types/app/bsky/graph/getFollowers.js'
@@ -367,11 +377,13 @@ export * as AppBskyGraphGetStarterPacks from './types/app/bsky/graph/getStarterP
 export * as AppBskyGraphGetStarterPacksWithMembership from './types/app/bsky/graph/getStarterPacksWithMembership.js'
 export * as AppBskyGraphGetSuggestedFollowsByActor from './types/app/bsky/graph/getSuggestedFollowsByActor.js'
 export * as AppBskyGraphList from './types/app/bsky/graph/list.js'
+export * as AppBskyGraphListFollowRequests from './types/app/bsky/graph/listFollowRequests.js'
 export * as AppBskyGraphListblock from './types/app/bsky/graph/listblock.js'
 export * as AppBskyGraphListitem from './types/app/bsky/graph/listitem.js'
 export * as AppBskyGraphMuteActor from './types/app/bsky/graph/muteActor.js'
 export * as AppBskyGraphMuteActorList from './types/app/bsky/graph/muteActorList.js'
 export * as AppBskyGraphMuteThread from './types/app/bsky/graph/muteThread.js'
+export * as AppBskyGraphRespondToFollowRequest from './types/app/bsky/graph/respondToFollowRequest.js'
 export * as AppBskyGraphSearchStarterPacks from './types/app/bsky/graph/searchStarterPacks.js'
 export * as AppBskyGraphStarterpack from './types/app/bsky/graph/starterpack.js'
 export * as AppBskyGraphUnmuteActor from './types/app/bsky/graph/unmuteActor.js'
@@ -784,6 +796,17 @@ export class AppBskyActorNS {
     )
   }
 
+  getPrivacySettings(
+    params?: AppBskyActorGetPrivacySettings.QueryParams,
+    opts?: AppBskyActorGetPrivacySettings.CallOptions,
+  ): Promise<AppBskyActorGetPrivacySettings.Response> {
+    return this._client
+      .call('app.bsky.actor.getPrivacySettings', params, undefined, opts)
+      .catch((e) => {
+        throw AppBskyActorGetPrivacySettings.toKnownErr(e)
+      })
+  }
+
   getProfile(
     params?: AppBskyActorGetProfile.QueryParams,
     opts?: AppBskyActorGetProfile.CallOptions,
@@ -854,6 +877,17 @@ export class AppBskyActorNS {
       undefined,
       opts,
     )
+  }
+
+  setPrivacySettings(
+    data?: AppBskyActorSetPrivacySettings.InputSchema,
+    opts?: AppBskyActorSetPrivacySettings.CallOptions,
+  ): Promise<AppBskyActorSetPrivacySettings.Response> {
+    return this._client
+      .call('app.bsky.actor.setPrivacySettings', opts?.qp, data, opts)
+      .catch((e) => {
+        throw AppBskyActorSetPrivacySettings.toKnownErr(e)
+      })
   }
 }
 
@@ -1771,6 +1805,7 @@ export class AppBskyGraphNS {
   _client: XrpcClient
   block: AppBskyGraphBlockRecord
   follow: AppBskyGraphFollowRecord
+  followRequest: AppBskyGraphFollowRequestRecord
   list: AppBskyGraphListRecord
   listblock: AppBskyGraphListblockRecord
   listitem: AppBskyGraphListitemRecord
@@ -1781,11 +1816,23 @@ export class AppBskyGraphNS {
     this._client = client
     this.block = new AppBskyGraphBlockRecord(client)
     this.follow = new AppBskyGraphFollowRecord(client)
+    this.followRequest = new AppBskyGraphFollowRequestRecord(client)
     this.list = new AppBskyGraphListRecord(client)
     this.listblock = new AppBskyGraphListblockRecord(client)
     this.listitem = new AppBskyGraphListitemRecord(client)
     this.starterpack = new AppBskyGraphStarterpackRecord(client)
     this.verification = new AppBskyGraphVerificationRecord(client)
+  }
+
+  createFollowRequest(
+    data?: AppBskyGraphCreateFollowRequest.InputSchema,
+    opts?: AppBskyGraphCreateFollowRequest.CallOptions,
+  ): Promise<AppBskyGraphCreateFollowRequest.Response> {
+    return this._client
+      .call('app.bsky.graph.createFollowRequest', opts?.qp, data, opts)
+      .catch((e) => {
+        throw AppBskyGraphCreateFollowRequest.toKnownErr(e)
+      })
   }
 
   getActorStarterPacks(
@@ -1964,6 +2011,18 @@ export class AppBskyGraphNS {
     )
   }
 
+  listFollowRequests(
+    params?: AppBskyGraphListFollowRequests.QueryParams,
+    opts?: AppBskyGraphListFollowRequests.CallOptions,
+  ): Promise<AppBskyGraphListFollowRequests.Response> {
+    return this._client.call(
+      'app.bsky.graph.listFollowRequests',
+      params,
+      undefined,
+      opts,
+    )
+  }
+
   muteActor(
     data?: AppBskyGraphMuteActor.InputSchema,
     opts?: AppBskyGraphMuteActor.CallOptions,
@@ -1988,6 +2047,17 @@ export class AppBskyGraphNS {
     opts?: AppBskyGraphMuteThread.CallOptions,
   ): Promise<AppBskyGraphMuteThread.Response> {
     return this._client.call('app.bsky.graph.muteThread', opts?.qp, data, opts)
+  }
+
+  respondToFollowRequest(
+    data?: AppBskyGraphRespondToFollowRequest.InputSchema,
+    opts?: AppBskyGraphRespondToFollowRequest.CallOptions,
+  ): Promise<AppBskyGraphRespondToFollowRequest.Response> {
+    return this._client
+      .call('app.bsky.graph.respondToFollowRequest', opts?.qp, data, opts)
+      .catch((e) => {
+        throw AppBskyGraphRespondToFollowRequest.toKnownErr(e)
+      })
   }
 
   searchStarterPacks(
@@ -2187,6 +2257,89 @@ export class AppBskyGraphFollowRecord {
       'com.atproto.repo.deleteRecord',
       undefined,
       { collection: 'app.bsky.graph.follow', ...params },
+      { headers },
+    )
+  }
+}
+
+export class AppBskyGraphFollowRequestRecord {
+  _client: XrpcClient
+
+  constructor(client: XrpcClient) {
+    this._client = client
+  }
+
+  async list(
+    params: OmitKey<ComAtprotoRepoListRecords.QueryParams, 'collection'>,
+  ): Promise<{
+    cursor?: string
+    records: { uri: string; value: AppBskyGraphFollowRequest.Record }[]
+  }> {
+    const res = await this._client.call('com.atproto.repo.listRecords', {
+      collection: 'app.bsky.graph.followRequest',
+      ...params,
+    })
+    return res.data
+  }
+
+  async get(
+    params: OmitKey<ComAtprotoRepoGetRecord.QueryParams, 'collection'>,
+  ): Promise<{
+    uri: string
+    cid: string
+    value: AppBskyGraphFollowRequest.Record
+  }> {
+    const res = await this._client.call('com.atproto.repo.getRecord', {
+      collection: 'app.bsky.graph.followRequest',
+      ...params,
+    })
+    return res.data
+  }
+
+  async create(
+    params: OmitKey<
+      ComAtprotoRepoCreateRecord.InputSchema,
+      'collection' | 'record'
+    >,
+    record: Un$Typed<AppBskyGraphFollowRequest.Record>,
+    headers?: Record<string, string>,
+  ): Promise<{ uri: string; cid: string }> {
+    const collection = 'app.bsky.graph.followRequest'
+    const res = await this._client.call(
+      'com.atproto.repo.createRecord',
+      undefined,
+      { collection, ...params, record: { ...record, $type: collection } },
+      { encoding: 'application/json', headers },
+    )
+    return res.data
+  }
+
+  async put(
+    params: OmitKey<
+      ComAtprotoRepoPutRecord.InputSchema,
+      'collection' | 'record'
+    >,
+    record: Un$Typed<AppBskyGraphFollowRequest.Record>,
+    headers?: Record<string, string>,
+  ): Promise<{ uri: string; cid: string }> {
+    const collection = 'app.bsky.graph.followRequest'
+    const res = await this._client.call(
+      'com.atproto.repo.putRecord',
+      undefined,
+      { collection, ...params, record: { ...record, $type: collection } },
+      { encoding: 'application/json', headers },
+    )
+    return res.data
+  }
+
+  async delete(
+    params: OmitKey<ComAtprotoRepoDeleteRecord.InputSchema, 'collection'>,
+    headers?: Record<string, string>,
+  ): Promise<void> {
+    await this._client.call(
+      'com.atproto.repo.deleteRecord',
+      undefined,
+      { collection: 'app.bsky.graph.followRequest', ...params },
       { headers },
     )
   }
