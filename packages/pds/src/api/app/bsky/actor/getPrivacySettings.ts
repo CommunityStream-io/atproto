@@ -22,7 +22,7 @@ export default function (server: Server, ctx: AppContext) {
           if (!resolved) {
             throw new InvalidRequestError('Actor not found', 'NotFound')
           }
-          targetDid = resolved
+          targetDid = resolved.id
         } catch (err) {
           throw new InvalidRequestError('Actor not found', 'NotFound')
         }

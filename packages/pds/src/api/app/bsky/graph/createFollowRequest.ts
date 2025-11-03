@@ -2,6 +2,7 @@ import { InvalidRequestError } from '@atproto/xrpc-server'
 import { AppContext } from '../../../../context'
 import { Server } from '../../../../lexicon'
 import { ids } from '../../../../lexicon/lexicons'
+import { prepareCreate } from '../../../../repo'
 
 export default function (server: Server, ctx: AppContext) {
   server.app.bsky.graph.createFollowRequest({
@@ -67,6 +68,8 @@ export default function (server: Server, ctx: AppContext) {
         async (store) => {
           return store.record.listRecordsForCollection({
             collection: 'app.bsky.graph.followRequest',
+            limit: 100,
+            reverse: false,
           })
         },
       )
@@ -91,20 +94,24 @@ export default function (server: Server, ctx: AppContext) {
         createdAt: new Date().toISOString(),
       }
 
-      const result = await ctx.actorStore.transact(
+      const write = await prepareCreate({
+        did: requester,
+        collection: 'app.bsky.graph.followRequest',
+        record,
+      })
+
+      const commit = await ctx.actorStore.transact(
         requester,
         async (actorTxn) => {
-          const prepared = await actorTxn.repo.prepareCreate({
-            collection: 'app.bsky.graph.followRequest',
-            record,
-          })
-          const commit = await actorTxn.repo.processWrites({
-            writes: [prepared],
-            swapCommitCid: null,
-          })
-          return { uri: prepared.uri, cid: commit.cid }
+          const commit = await actorTxn.repo.processWrites([write], undefined)
+          await ctx.sequencer.sequenceCommit(requester, commit)
+          return commit
         },
       )
+
+      await ctx.accountManager.updateRepoRoot(requester, commit.cid, commit.rev)
+
+      const result = { uri: write.uri.toString(), cid: write.cid.toString() }
 
       return {
         encoding: 'application/json' as const,

@@ -1,3 +1,4 @@
+import { AtUri } from '@atproto/syntax'
 import { AppContext } from '../../../../context'
 import { Server } from '../../../../lexicon'
 import { ids } from '../../../../lexicon/lexicons'
@@ -27,7 +28,8 @@ export default function (server: Server, ctx: AppContext) {
           return store.record.listRecordsForCollection({
             collection: 'app.bsky.graph.followRequest',
             limit: limit + 1,
-            after: cursor,
+            reverse: false,
+            cursor: cursor,
           })
         })
 
@@ -66,13 +68,11 @@ export default function (server: Server, ctx: AppContext) {
             const requesterDid = uriParts[2]
             const rkey = uriParts[4]
 
+            const uri = AtUri.make(requesterDid, 'app.bsky.graph.followRequest', rkey)
             const record = await ctx.actorStore.read(
               requesterDid,
               async (store) => {
-                return store.record.getRecord(
-                  'app.bsky.graph.followRequest',
-                  rkey,
-                )
+                return store.record.getRecord(uri, null)
               },
             )
 
@@ -134,13 +134,11 @@ export default function (server: Server, ctx: AppContext) {
             let displayName: string | undefined
             let avatar: string | undefined
             try {
+              const profileUri = AtUri.make(requesterDid, 'app.bsky.actor.profile', 'self')
               const profile = await ctx.actorStore.read(
                 requesterDid,
                 async (store) => {
-                  return store.record.getRecord(
-                    'app.bsky.actor.profile',
-                    'self',
-                  )
+                  return store.record.getRecord(profileUri, null)
                 },
               )
               if (profile) {

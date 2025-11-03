@@ -1,8 +1,10 @@
+import { CID } from 'multiformats/cid'
 import { AtUri } from '@atproto/syntax'
 import { AuthRequiredError, InvalidRequestError } from '@atproto/xrpc-server'
 import { AppContext } from '../../../../context'
 import { Server } from '../../../../lexicon'
 import { ids } from '../../../../lexicon/lexicons'
+import { prepareCreate, prepareUpdate } from '../../../../repo'
 
 export default function (server: Server, ctx: AppContext) {
   server.app.bsky.graph.respondToFollowRequest({
@@ -56,10 +58,7 @@ export default function (server: Server, ctx: AppContext) {
       const request = await ctx.actorStore.read(
         requesterDid,
         async (store) => {
-          return store.record.getRecord(
-            'app.bsky.graph.followRequest',
-            rkey,
-          )
+          return store.record.getRecord(uri, null, false)
         },
       )
 
@@ -88,22 +87,23 @@ export default function (server: Server, ctx: AppContext) {
         respondedAt: new Date().toISOString(),
       }
 
-      const updateResult = await ctx.actorStore.transact(
-        requesterDid,
-        async (actorTxn) => {
-          const prepared = await actorTxn.repo.prepareUpdate({
-            collection: 'app.bsky.graph.followRequest',
-            rkey,
-            record: updatedRecord,
-            swapCid: request.cid,
-          })
-          const commit = await actorTxn.repo.processWrites({
-            writes: [prepared],
-            swapCommitCid: null,
-          })
-          return { uri: prepared.uri, cid: commit.cid }
-        },
-      )
+      const updateWrite = await prepareUpdate({
+        did: requesterDid,
+        collection: 'app.bsky.graph.followRequest',
+        rkey,
+        record: updatedRecord,
+        swapCid: CID.parse(request.cid),
+      })
+
+      const updateCommit = await ctx.actorStore.transact(requesterDid, async (actorTxn) => {
+        const commit = await actorTxn.repo.processWrites([updateWrite], undefined)
+        await ctx.sequencer.sequenceCommit(requesterDid, commit)
+        return commit
+      })
+
+      await ctx.accountManager.updateRepoRoot(requesterDid, updateCommit.cid, updateCommit.rev)
+
+      const updateResult = { uri: updateWrite.uri.toString(), cid: updateWrite.cid.toString() }
 
       let followRecord: { uri: string; cid: string } | undefined
 
@@ -115,23 +115,24 @@ export default function (server: Server, ctx: AppContext) {
           createdAt: new Date().toISOString(),
         }
 
-        followRecord = await ctx.actorStore.transact(
-          requesterDid,
-          async (actorTxn) => {
-            const prepared = await actorTxn.repo.prepareCreate({
-              collection: 'app.bsky.graph.follow',
-              record: followRecordData,
-            })
-            const commit = await actorTxn.repo.processWrites({
-              writes: [prepared],
-              swapCommitCid: null,
-            })
-            return {
-              uri: prepared.uri.toString(),
-              cid: commit.cid.toString(),
-            }
-          },
-        )
+        const followWrite = await prepareCreate({
+          did: requesterDid,
+          collection: 'app.bsky.graph.follow',
+          record: followRecordData,
+        })
+
+        const followCommit = await ctx.actorStore.transact(requesterDid, async (actorTxn) => {
+          const commit = await actorTxn.repo.processWrites([followWrite], undefined)
+          await ctx.sequencer.sequenceCommit(requesterDid, commit)
+          return commit
+        })
+
+        await ctx.accountManager.updateRepoRoot(requesterDid, followCommit.cid, followCommit.rev)
+
+        followRecord = {
+          uri: followWrite.uri.toString(),
+          cid: followWrite.cid.toString(),
+        }
       }
 
       return {
