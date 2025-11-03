@@ -10,6 +10,11 @@ let agent: AtpAgent
 let aliceAgent: AtpAgent
 let bobAgent: AtpAgent
 let carolAgent: AtpAgent
+let danAgent: AtpAgent
+let eveAgent: AtpAgent
+let frankAgent: AtpAgent
+let graceAgent: AtpAgent
+let jackAgent: AtpAgent
 
 beforeAll(async () => {
   network = await TestNetworkNoAppView.create({
@@ -21,6 +26,11 @@ beforeAll(async () => {
   aliceAgent = network.pds.getClient()
   bobAgent = network.pds.getClient()
   carolAgent = network.pds.getClient()
+  danAgent = network.pds.getClient()
+  eveAgent = network.pds.getClient()
+  frankAgent = network.pds.getClient()
+  graceAgent = network.pds.getClient()
+  jackAgent = network.pds.getClient()
 
   await aliceAgent.createAccount({
     email: 'alice@test.com',
@@ -38,6 +48,36 @@ beforeAll(async () => {
     email: 'carol@test.com',
     handle: 'carol.test',
     password: 'carol-pass',
+  })
+
+  await danAgent.createAccount({
+    email: 'dan@test.com',
+    handle: 'dan.test',
+    password: 'dan-pass',
+  })
+
+  await eveAgent.createAccount({
+    email: 'eve@test.com',
+    handle: 'eve.test',
+    password: 'eve-pass',
+  })
+
+  await frankAgent.createAccount({
+    email: 'frank@test.com',
+    handle: 'frank.test',
+    password: 'frank-pass',
+  })
+
+  await graceAgent.createAccount({
+    email: 'grace@test.com',
+    handle: 'grace.test',
+    password: 'grace-pass',
+  })
+
+  await jackAgent.createAccount({
+    email: 'jack@test.com',
+    handle: 'jack.test',
+    password: 'jack-pass',
   })
 })
 
@@ -163,7 +203,7 @@ describe('follow request records', () => {
         $type: 'app.bsky.graph.followRequest',
         subject: aliceAgent.accountDid,
         status: 'approved',
-        createdAt: createRes.data.uri,
+        createdAt: new Date().toISOString(),
         respondedAt: new Date().toISOString(),
       },
     })
@@ -399,6 +439,13 @@ describe('follow request endpoints', () => {
       })
     })
 
+    afterAll(async () => {
+      // Cleanup: set Bob's profile back to public
+      await bobAgent.api.app.bsky.actor.setPrivacySettings({
+        isPrivate: false,
+      })
+    })
+
     it('creates a follow request to a private profile', async () => {
       const res = await aliceAgent.api.app.bsky.graph.createFollowRequest({
         subject: bobAgent.accountDid,
@@ -408,6 +455,13 @@ describe('follow request endpoints', () => {
       expect(res.data.cid).toBeDefined()
       expect(res.data.uri).toContain(aliceAgent.accountDid)
       expect(res.data.uri).toContain('app.bsky.graph.followRequest')
+      
+      // Cleanup: delete the follow request we just created
+      await aliceAgent.api.com.atproto.repo.deleteRecord({
+        repo: aliceAgent.accountDid,
+        collection: 'app.bsky.graph.followRequest',
+        rkey: new AtUri(res.data.uri).rkey,
+      })
     })
 
     it('fails when profile is not private', async () => {
@@ -421,7 +475,7 @@ describe('follow request endpoints', () => {
 
     it('prevents duplicate follow requests', async () => {
       // Carol creates first request to Bob
-      await carolAgent.api.app.bsky.graph.createFollowRequest({
+      const res = await carolAgent.api.app.bsky.graph.createFollowRequest({
         subject: bobAgent.accountDid,
       })
 
@@ -431,6 +485,13 @@ describe('follow request endpoints', () => {
           subject: bobAgent.accountDid,
         }),
       ).rejects.toThrow(/duplicate/i)
+      
+      // Cleanup: delete Carol's request
+      await carolAgent.api.com.atproto.repo.deleteRecord({
+        repo: carolAgent.accountDid,
+        collection: 'app.bsky.graph.followRequest',
+        rkey: new AtUri(res.data.uri).rkey,
+      })
     })
 
     it('fails for non-existent subject', async () => {
@@ -454,14 +515,7 @@ describe('follow request endpoints', () => {
 
   describe('listFollowRequests', () => {
     beforeAll(async () => {
-      // Clean slate - make Dan's profile private
-      const danAgent = network.pds.getClient()
-      await danAgent.createAccount({
-        email: 'dan@test.com',
-        handle: 'dan.test',
-        password: 'dan-pass',
-      })
-
+      // Make Dan's profile private
       await danAgent.api.app.bsky.actor.setPrivacySettings({
         isPrivate: true,
       })
@@ -473,6 +527,27 @@ describe('follow request endpoints', () => {
 
       await bobAgent.api.app.bsky.graph.createFollowRequest({
         subject: danAgent.accountDid,
+      })
+    })
+
+    afterAll(async () => {
+      // Cleanup: delete the follow requests
+      const requests = await danAgent.api.app.bsky.graph.listFollowRequests({
+        direction: 'incoming',
+      })
+      
+      for (const req of requests.data.requests) {
+        const uri = new AtUri(req.uri)
+        await network.pds.getClient().api.com.atproto.repo.deleteRecord({
+          repo: uri.hostname,
+          collection: uri.collection,
+          rkey: uri.rkey,
+        })
+      }
+      
+      // Set Dan's profile back to public
+      await danAgent.api.app.bsky.actor.setPrivacySettings({
+        isPrivate: false,
       })
     })
 
@@ -562,26 +637,9 @@ describe('follow request endpoints', () => {
   })
 
   describe('respondToFollowRequest', () => {
-    let eveAgent: AtpAgent
-    let frankAgent: AtpAgent
     let requestUri: string
 
     beforeAll(async () => {
-      eveAgent = network.pds.getClient()
-      frankAgent = network.pds.getClient()
-
-      await eveAgent.createAccount({
-        email: 'eve@test.com',
-        handle: 'eve.test',
-        password: 'eve-pass',
-      })
-
-      await frankAgent.createAccount({
-        email: 'frank@test.com',
-        handle: 'frank.test',
-        password: 'frank-pass',
-      })
-
       // Make Frank's profile private
       await frankAgent.api.app.bsky.actor.setPrivacySettings({
         isPrivate: true,
@@ -606,14 +664,7 @@ describe('follow request endpoints', () => {
     })
 
     it('creates follow record on approval', async () => {
-      // Create new request for testing
-      const graceAgent = network.pds.getClient()
-      await graceAgent.createAccount({
-        email: 'grace@test.com',
-        handle: 'grace.test',
-        password: 'grace-pass',
-      })
-
+      // Create new request for testing with Grace
       const createRes = await graceAgent.api.app.bsky.graph.createFollowRequest(
         {
           subject: frankAgent.accountDid,
@@ -700,13 +751,6 @@ describe('follow request endpoints', () => {
     })
 
     it('validates response parameter', async () => {
-      const jackAgent = network.pds.getClient()
-      await jackAgent.createAccount({
-        email: 'jack@test.com',
-        handle: 'jack.test',
-        password: 'jack-pass',
-      })
-
       const createRes = await jackAgent.api.app.bsky.graph.createFollowRequest({
         subject: frankAgent.accountDid,
       })
@@ -716,7 +760,7 @@ describe('follow request endpoints', () => {
           requestUri: createRes.data.uri,
           response: 'invalid' as any,
         }),
-      ).rejects.toThrow(/invalid/i)
+      ).rejects.toThrow(/must be one of/i)
     })
 
     it('requires authentication', async () => {
@@ -728,6 +772,13 @@ describe('follow request endpoints', () => {
           response: 'approve',
         }),
       ).rejects.toThrow()
+    })
+
+    afterAll(async () => {
+      // Cleanup: set Frank's profile back to public
+      await frankAgent.api.app.bsky.actor.setPrivacySettings({
+        isPrivate: false,
+      })
     })
   })
 })

@@ -28,7 +28,7 @@ export default function (server: Server, ctx: AppContext) {
 
       // Store privacy settings as a preference
       const privacyPref = {
-        $type: 'app.bsky.actor.privacySettings',
+        $type: 'app.bsky.actor.defs#privateProfilePref',
         isPrivate,
       }
 

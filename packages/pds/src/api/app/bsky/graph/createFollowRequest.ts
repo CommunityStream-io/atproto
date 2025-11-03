@@ -46,10 +46,10 @@ export default function (server: Server, ctx: AppContext) {
         async (actorStore) => {
           const prefs = await actorStore.pref.getPreferences(
             'app.bsky',
-            {} as any,
+            { hasAccessFull: true },
           )
           const privacyPref = prefs.find(
-            (p) => p.$type === 'app.bsky.actor.privacySettings',
+            (p) => p.$type === 'app.bsky.actor.defs#privateProfilePref',
           )
           return (privacyPref as any)?.isPrivate || false
         },
