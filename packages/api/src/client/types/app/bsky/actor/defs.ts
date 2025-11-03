@@ -268,6 +268,7 @@ export type Preferences = (
   | $Typed<LabelersPref>
   | $Typed<PostInteractionSettingsPref>
   | $Typed<VerificationPrefs>
+  | $Typed<PrivateProfilePref>
   | { $type: string }
 )[]
 
@@ -596,6 +597,23 @@ export function isVerificationPrefs<V>(v: V) {
 
 export function validateVerificationPrefs<V>(v: V) {
   return validate<VerificationPrefs & V>(v, id, hashVerificationPrefs)
+}
+
+/** Preferences for private profile settings, controlling who can follow and view the account's content. Existing followers are retained when switching to private; only new follow attempts require approval. */
+export interface PrivateProfilePref {
+  $type?: 'app.bsky.actor.defs#privateProfilePref'
+  /** Whether the profile is private. If true, new follow requests must be approved before followers can view content. Existing followers are automatically retained. */
+  isPrivate: boolean
+}
+
+const hashPrivateProfilePref = 'privateProfilePref'
+
+export function isPrivateProfilePref<V>(v: V) {
+  return is$typed(v, id, hashPrivateProfilePref)
+}
+
+export function validatePrivateProfilePref<V>(v: V) {
+  return validate<PrivateProfilePref & V>(v, id, hashPrivateProfilePref)
 }
 
 /** Default post interaction settings for the account. These values should be applied as default values when creating new posts. These refs should mirror the threadgate and postgate records exactly. */

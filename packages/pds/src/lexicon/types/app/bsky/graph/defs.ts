@@ -196,3 +196,31 @@ export function isRelationship<V>(v: V) {
 export function validateRelationship<V>(v: V) {
   return validate<Relationship & V>(v, id, hashRelationship)
 }
+
+/** View of a follow request with requester profile information */
+export interface FollowRequestView {
+  $type?: 'app.bsky.graph.defs#followRequestView'
+  /** AT-URI of the follow request record */
+  uri: string
+  /** CID of the follow request record */
+  cid?: string
+  requester: AppBskyActorDefs.ProfileView
+  /** DID of the private profile being requested to follow */
+  subject: string
+  /** Current status of the follow request */
+  status: 'pending' | 'approved' | 'denied'
+  /** Timestamp when the follow request was created */
+  createdAt: string
+  /** Timestamp when the follow request was approved or denied */
+  respondedAt?: string
+}
+
+const hashFollowRequestView = 'followRequestView'
+
+export function isFollowRequestView<V>(v: V) {
+  return is$typed(v, id, hashFollowRequestView)
+}
+
+export function validateFollowRequestView<V>(v: V) {
+  return validate<FollowRequestView & V>(v, id, hashFollowRequestView)
+}
