@@ -3,48 +3,49 @@ import { TestNetworkNoAppView } from '@atproto/dev-env'
 import { AtUri } from '@atproto/syntax'
 import { AppContext } from '../src/context'
 
+// Shared test setup - accessible by all describe blocks
+let network: TestNetworkNoAppView
+let ctx: AppContext
+let agent: AtpAgent
+let aliceAgent: AtpAgent
+let bobAgent: AtpAgent
+let carolAgent: AtpAgent
+
+beforeAll(async () => {
+  network = await TestNetworkNoAppView.create({
+    dbPostgresSchema: 'follow_requests',
+  })
+  // @ts-expect-error Error due to circular dependency with the dev-env package
+  ctx = network.pds.ctx
+  agent = network.pds.getClient()
+  aliceAgent = network.pds.getClient()
+  bobAgent = network.pds.getClient()
+  carolAgent = network.pds.getClient()
+
+  await aliceAgent.createAccount({
+    email: 'alice@test.com',
+    handle: 'alice.test',
+    password: 'alice-pass',
+  })
+
+  await bobAgent.createAccount({
+    email: 'bob@test.com',
+    handle: 'bob.test',
+    password: 'bob-pass',
+  })
+
+  await carolAgent.createAccount({
+    email: 'carol@test.com',
+    handle: 'carol.test',
+    password: 'carol-pass',
+  })
+})
+
+afterAll(async () => {
+  await network.close()
+})
+
 describe('follow request records', () => {
-  let network: TestNetworkNoAppView
-  let ctx: AppContext
-  let agent: AtpAgent
-  let aliceAgent: AtpAgent
-  let bobAgent: AtpAgent
-  let carolAgent: AtpAgent
-
-  beforeAll(async () => {
-    network = await TestNetworkNoAppView.create({
-      dbPostgresSchema: 'follow_requests',
-    })
-    // @ts-expect-error Error due to circular dependency with the dev-env package
-    ctx = network.pds.ctx
-    agent = network.pds.getClient()
-    aliceAgent = network.pds.getClient()
-    bobAgent = network.pds.getClient()
-    carolAgent = network.pds.getClient()
-
-    await aliceAgent.createAccount({
-      email: 'alice@test.com',
-      handle: 'alice.test',
-      password: 'alice-pass',
-    })
-
-    await bobAgent.createAccount({
-      email: 'bob@test.com',
-      handle: 'bob.test',
-      password: 'bob-pass',
-    })
-
-    await carolAgent.createAccount({
-      email: 'carol@test.com',
-      handle: 'carol.test',
-      password: 'carol-pass',
-    })
-  })
-
-  afterAll(async () => {
-    await network.close()
-  })
-
   it('creates a follow request record', async () => {
     const res = await aliceAgent.api.com.atproto.repo.createRecord({
       repo: aliceAgent.accountDid,
@@ -390,9 +391,6 @@ describe('follow request records', () => {
 })
 
 describe('follow request endpoints', () => {
-  // Reuse the same network, ctx, and agents from the parent scope
-  // The agents were already created in the first beforeAll block
-
   describe('createFollowRequest', () => {
     beforeAll(async () => {
       // Make Bob's profile private for endpoint tests
